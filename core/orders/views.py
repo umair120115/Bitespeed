@@ -226,8 +226,9 @@ class SolutionView3(APIView):
         emails=[]
         phonenumbers=[]
         secondaryContactIds=[]
+        print(f"{email}\n{phone}\n")
 
-        if phone!="" and email!="":
+        if email!="" and phone!="" and  Contact.objects.filter(Q(phone=phone) | Q(email=email)).exists():
             #either email or phone matches
             if Contact.objects.filter(Q(phone=phone) | Q(email=email)).exists(): 
                 renderContacts = Contact.objects.filter(Q(phone=phone) | Q(email=email)).order_by('createdAt')#all the instances containing emale or phone
@@ -294,15 +295,26 @@ class SolutionView3(APIView):
                 newContact= Contact.objects.create(phone=phone)
                 newContact.save()
                 print(f"New Saved \n")
-            if email and phone and phone!="" and email!="":
+            if email and phone:
                 newContact=Contact.objects.create(phone=phone, email=email)
                 newContact.save()
                 print(f"New Saved \n")
 
-        allcontacts= Contact.objects.filter(Q(linkedId__phone=phone) | Q(linkedId__email__exact=email) | Q(email=email) | Q(phone=phone)).distinct().first()
-        primaryContactNumber=allcontacts.linkedId.phone if allcontacts.linkedId else allcontacts.phone
-        primaryEmail=allcontacts.linkedId.email if allcontacts.linkedId else allcontacts.email
+        allcontacts= Contact.objects.filter(Q(linkedId__phone=phone) | Q(linkedId__email=email) | Q(email=email) | Q(phone=phone)).distinct()
+        
+        primaryContactNumber=allcontacts[0].linkedId.phone if allcontacts[0].linkedId else phone
+        primaryEmail=allcontacts[0].linkedId.email if allcontacts[0].linkedId else email
         extractedAllContacts= Contact.objects.filter(Q(linkedId__phone=primaryContactNumber) | Q(linkedId__email__exact=primaryEmail) | Q(email=primaryEmail) | Q(phone=primaryContactNumber)).distinct()
+            # primaryContactId, emails, phoneNumbers, secondaryContactIds= self.formatted_response(extractedAllContacts)
+            # return Response({
+            #     'contact': {
+            #     "primaryContactId":primaryContactId,
+            #     "emails":(emails),
+            #     "phoneNumbers": (phoneNumbers),
+            #     "secondaryContactIds":set(secondaryContactIds)
+            # })
+        
+        # extractedAllContacts= Contact.objects.filter(Q(linkedId__phone=phone) | Q(linkedId__email__exact=email) | Q(email=email) | Q(phone=phone)).distinct()
         primaryContactId, emails, phoneNumbers, secondaryContactIds= self.formatted_response(extractedAllContacts)
         return Response({
                 'contact': {
