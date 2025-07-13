@@ -15,3 +15,13 @@ class ContactSerializers(serializers.ModelSerializer):
     class Meta:
         model = Contact
         fields = ( 'id', 'phone', 'email', 'linkedId', 'linkPrecedence', 'createdAt', 'deletedAt', 'updatedAt' )
+
+class InputSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=False)
+    phone = serializers.IntegerField(required=False)
+
+class OutputSerializer(serializers.Serializer):
+    primaryContactId = serializers.UUIDField()
+    emails = serializers.ListField()
+    phoneNumbers = serializers.ListField()
+    secondaryContactIds= serializers.ListField()

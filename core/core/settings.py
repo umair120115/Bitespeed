@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_filters',
     'rest_framework',
+    'drf_yasg',
+    
 
 
     'orders',
@@ -58,7 +60,18 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.gzip.GZipMiddleware',
 ]
+#swagger config
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
+        }
+    },
+    'USE_SESSION_AUTH': False,
 
+}
 ROOT_URLCONF = 'core.urls'
 
 TEMPLATES = [
@@ -79,22 +92,14 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
+#Database config
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),#'pathology_b2yu',
-        'USER': os.getenv('DB_USER'),#'pathology_b2yu_user',
-        'PASSWORD': os.getenv('DB_PASSWORD'),#'ZI4erb3umKWVUUMgt1l71w4B1BPPd7a2',
-        'HOST': os.getenv('DB_HOST'),#'dpg-d1l3kn95pdvs73bfm87g-a.oregon-postgres.render.com',
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
         'PORT': os.getenv('DB_PORT'),
     }
 }

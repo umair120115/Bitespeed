@@ -2,7 +2,7 @@ from django.urls import path
 # from django.conf.
 from django.conf import settings
 from django.conf.urls.static import static
-from orders.views import ContactView, SolutionView, SolutionView3
+from orders.views import ContactView, SolutionView3
 urlpatterns=[
     path('contacts/',ContactView.as_view(),name='contact-lists'),
     # path('identify/', SolutionView.as_view(), name='solutions'),

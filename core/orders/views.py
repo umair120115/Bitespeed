@@ -1,17 +1,19 @@
 from django.shortcuts import render
 from .models import Contact
-from .serializers import ContactSerializers
+from .serializers import ContactSerializers, InputSerializer, OutputSerializer
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Q  # for filtering 
 from collections import OrderedDict
+from drf_yasg.utils import swagger_auto_schema
+
 # Create your views here.
 
 class ContactView(APIView):
     permission_classes=[AllowAny]
-
+    @swagger_auto_schema(query_serializer=ContactSerializers)
     def get(self,request):
         contacts = Contact.objects.all()
         serializer = ContactSerializers(contacts, many=True)
@@ -24,191 +26,6 @@ class ContactView(APIView):
                 "contacts":Contact.objects.none()
             }, status=status.HTTP_204_NO_CONTENT)
 
-class SolutionView(APIView):
-    permission_classes=[AllowAny]
-
-    def post(self, request):
-        email= request.data.get('email')
-        phone = request.data.get('phoneNumber')
-        emails= []
-        phones=[]
-        secondaryContactIds=[]
-
-        if not email and not phone:
-            return Response({
-                "contact":Contact.objects.none(),
-                "message":f"Email or phone or both required!"
-            },status=status.HTTP_400_BAD_REQUEST)
-        contacts = Contact.objects.filter(
-            Q(phone=phone) | Q(email=email) | Q(linkedId__phone=phone) | Q(linkedId__email=email)
-        ).distinct()
-        for contact in contacts:
-            if contact.linkPrecedence=='primary':
-                primaryContactId= contact.id
-                emails.insert(0,contact.email)
-                phones.insert(0,contact.phone)
-            elif contact.linkPrecedence=='secondary':
-                emails.append(contact.email)
-                phones.append(contact.phone)
-                secondaryContactIds.append(contact.id)
-        return Response({
-            'contact': {
-                "primaryContactId":primaryContactId,
-                "emails":set(emails),
-                "phoneNumbers": set(phones),
-                "secondaryContactIds":set(secondaryContactIds)
-            }
-        }, status=status.HTTP_200_OK)
-            
-class SolutionView2(APIView):
-    permission_classes=[AllowAny]
-
-    def post(self, request):
-
-        email=  request.data.get('email')
-        phone=  request.data.get('phoneNumber')
-        email = (email or "").strip().lower()
-        phone = (phone or "").strip()
-        print(f"{email}\n {phone}\n")
-
-        if not email and not phone:
-            return Response({
-                "contact":Contact.objects.none(),
-                "message":f"Atleast provide one of the field, either email or phone!"
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-
-        #getting all those contacts having secondary number also 
-        print(f"Condition 1st => {Contact.objects.filter( Q(linkedId__phone__iexact=phone) | Q(linkedId__email__iexact=email)).exists()}\n")
-        print(f"Condition 2nd => {Contact.objects.filter(linkedId=None).filter( Q(email=email) | Q(phone=phone)).exists()}\n ")
-        print(f"Condition 3rd =>{Contact.objects.filter( Q(email=email) | Q(phone=phone) | Q(linkedId__phone=phone) | Q(linkedId__email=email)).exists()}\n")
-        if Contact.objects.filter( Q(linkedId__phone=phone) | Q(linkedId__email=email)).exists():
-            contacts=Contact.objects.filter( Q(linkedId__phone=phone) | Q(linkedId__email=email) | Q(email=email) | Q(phone=phone)).distinct()
-            primaryContactId, emails, phoneNumbers, secondaryContactIds= self.formatted_response(contacts)
-            return Response({
-                'contact': {
-                "primaryContactId":primaryContactId,
-                "emails":set(emails),
-                "phoneNumbers": set(phoneNumbers),
-                "secondaryContactIds":set(secondaryContactIds)
-            }
-            }, status=status.HTTP_200_OK)
-
-            
-
-
-        #if have primary but not secondary contacts are available 
-        # print(f"Condition 2nd => {Contact.objects.filter(linkedId=None).filter( Q(email=email) | Q(phone=phone)).exists()} ")
-        elif Contact.objects.filter(linkedId=None).filter( Q(email=email) | Q(phone=phone)).exists():
-            print(f"Condition 2nd => {Contact.objects.filter(linkedId=None).filter( Q(email=email) | Q(phone=phone)).exists()}\n ")
-            contacts= Contact.objects.filter( Q(email=email) | Q(phone=phone)).filter(linkedId=None).distinct() #getting all the primary contacts with no secondary 
-            nextContact=None #init. a variable to store prevContact during iteration
-            
-            for index,contact in enumerate(contacts):
-                if  contact.email!=email and contact.phone==phone: # if email is not equal to incoming req but phone is then contact with email will be created
-                    Contact.objects.create(email=email, linkPrecedence='secondary',linkedId=contact).save()
-                    # nextContact=contacts[index+1]
-                elif contact.phone!=phone and contact.email== email: #if email is matching but phone not so another contact instance willl be created
-                    Contact.objects.create(phone=phone, linkPrecedence='secondary', linkedId=contact).save()
-                    # nextContact=contacts[index+1]
-                else:
-                    for i,c in enumerate(contacts, start=index+1):
-                        if contact.email!=c.email and contact.phone==c.phone:
-                            if contact.createdAt > c.createdAt:
-                                contact.linkPrecedence='secondary'
-                                contact.linkedId=c
-                                contact.save()
-                            elif contact.createdAt < c.createdAt:
-                                c.linkPrecedence='secondary'
-                                c.linkedId=contact
-                                c.save()
-                        if not contact.email and contact.phone==c.phone:
-                            if contact.createdAt < c.createdAt:
-                                c.linkedId=contact
-                                c.linkPrecedence='secondary'
-                                c.save()
-                            elif contact.createdAt > c.createdAt:
-                                contact.linkedId=c
-                                contact.linkPrecedence='secondary'
-                                contact.save()
-                            
-                        if not contact.phone and contact.email==c.email:
-                            if contact.createdAt > c.createdAt:
-                                contact.linkedId=c
-                                contact.linkPrecedence='secondary'
-                                contact.save()
-                            elif contact.createdAt < c.createdAt:
-                                c.linkedId=contact
-                                c.linkPrecedence='secondary'
-                                c.save()
-                            
-                        if contact.phone!=c.phone and contact.email==c.email:
-                            if contact.createdAt > c.createdAt:
-                                contact.linkPrecedence='secondary'
-                                contact.linkedId=c
-                                contact.save()
-                            elif contact.createdAt < c.createdAt:
-                                c.linkedId=contact
-                                c.linkPrecedence='secondary'
-                                c.save()
-
-                        
-            rendering_contacts= Contact.objects.filter(Q(linkedId__phone=phone) | Q(linkedId__email=email) | Q(email=email) | Q(phone=phone)).distinct()
-            primaryContactId, emails, phoneNumbers, secondaryContactIds= self.formatted_response(rendering_contacts)
-            return Response({
-                'contact': {
-                "primaryContactId":primaryContactId,
-                "emails":set(emails),
-                "phoneNumbers": set(phoneNumbers),
-                "secondaryContactIds":set(secondaryContactIds)
-            }
-            }, status=status.HTTP_200_OK)
-
-                    
-            
-
-
-        #Don't have any contact in DB
-        elif Contact.objects.filter( Q(email=email) | Q(phone=phone) | Q(linkedId__phone=phone) | Q(linkedId__email=email)).exists()!=True:
-            if email and not phone:
-                Contact.objects.create(email=email).save()
-            elif phone and not email:
-                Contact.objects.create(phone=phone).save()
-            elif phone and email:
-                Contact.objects.create(email=email, phone= phone).save()
-            rendering_contacts= Contact.objects.filter(Q(linkedId__phone=phone) | Q(linkedId__email=email) | Q(email=email) | Q(phone=phone)).distinct()
-            primaryContactId, emails, phoneNumbers, secondaryContactIds= self.formatted_response(rendering_contacts)
-            return Response({
-                'contact': {
-                "primaryContactId":primaryContactId,
-                "emails":(emails),
-                "phoneNumbers": (phoneNumbers),
-                "secondaryContactIds":set(secondaryContactIds)
-            }
-            }, status=status.HTTP_200_OK)
-            
-            
-        
-
-
-    def formatted_response(self,contacts):
-        emails=[]
-        phoneNumbers=[]
-        secondaryContactIds=[]
-        primaryContactId=None
-        for contact in contacts:
-            if contact.linkPrecedence=='primary':
-                primaryContactId=contact.id
-                emails.insert(0,contact.email)
-                phoneNumbers.insert(0, contact.phone)
-            elif contact.linkPrecedence=='secondary':
-                secondaryContactIds.append(contact.id)
-                emails.append(contact.email)
-                phoneNumbers.append(contact.phone)
-        emails       = list(OrderedDict.fromkeys(emails))
-        phoneNumbers = list(OrderedDict.fromkeys(phoneNumbers))
-        # secondaryContactIds= list(OrderedDict.fromkeys(secondaryContactIds))
-        return primaryContactId,(emails),(phoneNumbers),(secondaryContactIds)
 
         
 
@@ -216,8 +33,12 @@ class SolutionView2(APIView):
             
 
 class SolutionView3(APIView):
+    
     permission_classes=[AllowAny]
-
+    @swagger_auto_schema(
+        request_body=InputSerializer,
+        responses={200: OutputSerializer}
+    )
     def post(self, request):
         email =request.data.get('email')
         phone = request.data.get('phoneNumber')
