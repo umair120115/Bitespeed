@@ -1,0 +1,67 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual environment
+venv/
+env/
+.venv/
+ENV/
+
+# Django stuff:
+*.log
+*.pot
+*.pyc
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+static/
+
+# Environment files and secrets
+.env
+.env.*
+speed/
+
+# Django migrations (optional to exclude if auto-generated)
+**/migrations/*.py
+**/migrations/*.pyc
+!*/migrations/__init__.py  # keep init file if you ignore migrations
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# macOS
+.DS_Store
+
+# Node (if you have frontend inside the same project)
+node_modules/
+build/
+dist/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# Pip dependency files
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Docker
+*.pid
+
+# System files
+Thumbs.db
+ehthumbs.db
