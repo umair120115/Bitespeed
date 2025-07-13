@@ -1,0 +1,62 @@
+
+networks:
+  web:
+    external: true
+  internal:
+    external: false
+
+services:
+  bitspeed-blocal:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bitspeed-blocal
+    command: doppler run -- gunicorn core.asgi:application \
+             -k uvicorn.workers.UvicornWorker \
+             --bind 0.0.0.0:8000
+    environment:
+      - DOPPLER_TOKEN=YOUR_DOPPLER_TOKEN
+      - DB_NAME
+      - DB_USER
+      - DB_HOST
+      - DB_PASSWORD
+      - DB_PORT
+      - GS_BUCKET_NAME
+      - GS_LOCATION
+      - GS_PROJECT_ID
+      - GOOGLE_SECRET_KEY
+      - DJANGO_SECRET_KEY
+    ports:
+      - 8000:8000
+
+
+# IdealMart Internal Testing
+
+  bitspeed-binternal:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bitspeed-binternal
+    command: doppler run -- gunicorn core.asgi:application \
+             -k uvicorn.workers.UvicornWorker \
+             --bind 0.0.0.0:8000
+    environment:
+      - DOPPLER_TOKEN=YOUR_DOPPLER_TOKEN
+      - DB_NAME
+      - DB_USER
+      - DB_HOST
+      - DB_PASSWORD
+      - DB_PORT
+      - GS_BUCKET_NAME
+      - GS_LOCATION
+      - GS_PROJECT_ID
+      - GOOGLE_SECRET_KEY
+      - DJANGO_SECRET_KEY
+    labels:
+      - traefik.http.routers.idealmart-bint.rule=Host(`api.pathology.testing.in`)
+      - traefik.http.routers.idealmart-bint.tls=true
+      - traefik.http.routers.idealmart-bint.tls.certresolver=lets-encrypt
+      - traefik.port=8000
+    networks:
+      - web
+      - internal
