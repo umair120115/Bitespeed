@@ -300,8 +300,8 @@ class SolutionView3(APIView):
                 print(f"New Saved \n")
 
         allcontacts= Contact.objects.filter(Q(linkedId__phone=phone) | Q(linkedId__email__exact=email) | Q(email=email) | Q(phone=phone)).distinct().first()
-        primaryContactNumber=allcontacts.linkedId.phone
-        primaryEmail=allcontacts.linkedId.email
+        primaryContactNumber=allcontacts.linkedId.phone if allcontacts.linkedId else allcontacts.phone
+        primaryEmail=allcontacts.linkedId.email if allcontacts.linkedId else allcontacts.email
         extractedAllContacts= Contact.objects.filter(Q(linkedId__phone=primaryContactNumber) | Q(linkedId__email__exact=primaryEmail) | Q(email=primaryEmail) | Q(phone=primaryContactNumber)).distinct()
         primaryContactId, emails, phoneNumbers, secondaryContactIds= self.formatted_response(extractedAllContacts)
         return Response({
