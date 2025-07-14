@@ -22,6 +22,25 @@ Required API's are live and can be tested wither on Postman or can be integrated
 - Ready-to-deploy to Render, GCP, AWS
 - api design for the proposed problem
 
+## Running Locally
+ ### Step1
+- git clone [https://www.github.com/umair120115/Bitespeed](https://github.com/umair120115/Bitespeed.git)
+ ### Step2
+- create virtual env with command - py -m venv NAME_VENV
+- activate virtual env, command - NAME_VENV\Scripts\activate (windows)
+- move to the app directory, command - cd core
+ ### Step3
+- Install dependencies, command - pip install -r requirements.txt
+- Configure your environment variables by creating a .env file like DJANGO_SECRET_KEY, DB_NAME, DB_USER, DB_HOST, DB_PORT, DB_PASSWORD, etc.
+- run the app and access on the port 8000, command - py manage.py runserver 8000
+
+## Containerising Application
+ ### Step1
+- CONFIGURE your DOPPLER_SECRETS and get the DOPPLER_TOKEN
+ ### Step2
+- In dir core, run - docker compose build
+- After image of the container is build, run the container by passing the port (8000) and passing the environment variable in the container as your DOPPLER_TOKEN
+- See your application on - http://localhost:8000/
 
 
 ### **API Documentation**
